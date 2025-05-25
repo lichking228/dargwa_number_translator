@@ -1,81 +1,74 @@
-def number_to_dargin(num):
+def number_to_dargin(num: int) -> str:
     if num == 0:
         return "нуль"
-    
-    basic_numbers = {
-        1: "ца", 2: "кIвел", 3: "хIябал", 4: "авъал", 5: "швал",
-        6: "уриґал", 7: "верхIал", 8: "гахIал", 9: "урчIимал", 10: "вицIал"
-    }
-    
-    teens = {
-        11: "вицIну цара", 12: "вицIну кIвира", 13: "вицIну хIябра",
-        14: "вицIну авра", 15: "вицIну шура", 16: "вицIну уриґра",
-        17: "вицIну верхIра", 18: "вицIну гахIра", 19: "вицIну урчIимра"
-    }
-    
-    tens = {
-        20: "гъал", 30: "хIябцIали", 40: "авцIали", 50: "шуцIали",
-        60: "уриґцIали", 70: "верхIцIали", 80: "гахIцIали", 90: "урчIимцIали"
-    }
-    
-    hundreds = {
-        100: "даршал", 200: "кIвидарш", 300: "хIябдарш", 400: "авдарш",
-        500: "шударш", 600: "уриґдарш", 700: "верхIдарш", 
-        800: "гахIдарш", 900: "урчIимдарш"
-    }
-    
-    def convert_under_thousand(n):
+
+    UNITS_BASE = {1:"ца",2:"кIвел",3:"хIябал",4:"авъал",5:"швал",
+                  6:"уриґал",7:"верхIал",8:"гахIал",9:"урчIимал"}
+    UNITS_COMP = {1:"цара",2:"кIвира",3:"хIябра",4:"авра",5:"шура",
+                  6:"уриґра",7:"верхIра",8:"гахIра",9:"урчIимра"}
+    TEENS = {11:"вицIну цара",12:"вицIну кIвира",13:"вицIну хIябра",
+             14:"вицIну авра",15:"вицIну шура",16:"вицIну уриґра",
+             17:"вицIну верхIра",18:"вицIну гахIра",19:"вицIну урчIимра"}
+    TENS_BASE = {20:"гъал",30:"хIябцIали",40:"авцIали",50:"шуцIали",
+                 60:"уриґцIали",70:"верхIцIали",80:"гахIцIали",90:"урчIимцIали"}
+    TENS_COMP = {20:"гъану",30:"хIябцIанну",40:"авцIанну",50:"шуцIанну",
+                 60:"уриґцIанну",70:"верхIцIанну",80:"гахIцIанну",90:"урчIимцIанну"}
+    HUNDREDS_BASE = {100:"даршал",200:"кIвидарш",300:"хIябдарш",400:"авдарш",
+                     500:"шударш",600:"уриґдарш",700:"верхIдарш",
+                     800:"гахIдарш",900:"урчIимдарш"}
+
+    def hundred_word(h: int, tail: bool) -> str:
+        if h == 100:
+            return "даршлим" if tail else "даршал"
+        return HUNDREDS_BASE[h] + ("лим" if tail else "")
+
+    def under_thousand(n: int) -> str:
         if n == 0:
             return ""
         parts = []
         if n >= 100:
-            h = (n // 100) * 100
-            parts.append(hundreds[h])
+            h_val = (n // 100) * 100
+            parts.append(hundred_word(h_val, n % 100 != 0))
             n %= 100
         if n >= 20:
             t = (n // 10) * 10
-            parts.append(tens[t])
+            parts.append(TENS_BASE[t] if n % 10 == 0 else TENS_COMP[t])
             n %= 10
             if n:
-                parts.append(basic_numbers[n])
+                parts.append(UNITS_COMP[n])
         elif n >= 11:
-            parts.append(teens[n])
+            parts.append(TEENS[n])
         elif n >= 1:
-            parts.append(basic_numbers[n])
-        return "ну ".join(parts) if len(parts) > 1 else (parts[0] if parts else "")
-    
-    def convert_with_thousands(n):
+            parts.append(UNITS_BASE[n])
+        return " ".join(parts)
+
+    def with_thousands(n: int) -> str:
         if n < 1000:
-            return convert_under_thousand(n)
+            return under_thousand(n)
         parts = []
         if n >= 1_000_000:
             m = n // 1_000_000
-            parts.append(
-                "āзирна āзир" if m == 1 
-                else convert_under_thousand(m) + " āзирна āзир"
-            )
+            parts.append("āзирна āзир" if m == 1 else f"{under_thousand(m)} āзирна āзир")
             n %= 1_000_000
         if n >= 1000:
             th = n // 1000
+            rem = n % 1000
             if th == 1:
-                parts.append("āзир" if n % 1000 == 0 else "āзиллим")
+                parts.append("āзир" if rem == 0 else "āзиллим")
             else:
-                parts.append(convert_under_thousand(th) + " āзиллим")
-            n %= 1000
+                parts.append(f"{under_thousand(th)} {'āзир' if rem == 0 else 'āзиллим'}")
+            n = rem
         if n:
-            r = convert_under_thousand(n)
-            if r:
-                parts.append(r)
+            parts.append(under_thousand(n))
         return " ".join(parts)
-    
-    return convert_with_thousands(num)
 
+    text = with_thousands(abs(num))
+    if num < 0:
+        text = "тIярхI " + text
+    return text
 
-
-num = int(input("ДелкIи лугIи").strip())
-
-dargin_text = number_to_dargin(abs(num))
-if num < 0:
-    dargin_text = "тIярхI " + dargin_text
-
-print(f"{num} -> {dargin_text}")
+if __name__ == "__main__":
+    try:
+        num = int(input("Введите целое число: ").strip())
+    except ValueError:
+        print("Ошибка: введите корректное целое число.")
